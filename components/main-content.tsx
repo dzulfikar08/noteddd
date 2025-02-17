@@ -19,6 +19,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
   const [todos, setTodos] = useState<Todo[]>([])
   const [newTodo, setNewTodo] = useState("")
   const [editingTodo, setEditingTodo] = useState<{ id: number; content: string } | null>(null)
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const handleSelectNote = (e: CustomEvent<Note>) => {
@@ -85,11 +86,12 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
 
   if (!currentNote) {
     return (
-      <SidebarInset>
-              <div className="flex items-center h-14 border-b bg-background px-4">
-        <h1 className="text-lg p-0 font-semibold">Select a list</h1>
-      </div>
-      </SidebarInset>
+      <div></div>
+      // <SidebarInset>
+      //         <div className="flex items-center h-14 border-b bg-background px-4">
+      //   <h1 className="text-lg p-0 font-semibold">Select a list</h1>
+      // </div>
+      // </SidebarInset>
     )
   }
 

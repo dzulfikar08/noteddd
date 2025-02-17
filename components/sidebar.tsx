@@ -35,7 +35,7 @@ export function Sidebar() {
       const res = await fetch("/api/notes");
       if (!res.ok) throw new Error("Failed to fetch notes");
       const data = await res.json() as { id: number; title: string; createdAt: string }[];
-      setNotes(data);
+      setNotes(data.sort((a, b) => b.id - a.id));
     } catch (error) {
       console.error(error);
     } finally {
@@ -101,6 +101,8 @@ export function Sidebar() {
         title: "Note updated",
         description: `"${editNoteTitle}" has been updated.`,
       })
+      fetchNotes()
+
     } catch (error) {
       toast({
         title: "Error",
@@ -120,6 +122,8 @@ export function Sidebar() {
         title: "Note deleted",
         description: `"${note.title}" has been deleted.`,
       })
+      fetchNotes()
+
     } catch (error) {
       toast({
         title: "Error",
@@ -215,3 +219,4 @@ export function Sidebar() {
   )
 
 }
+
