@@ -28,3 +28,6 @@ next-env.d.ts
 
 # wrangler
 wrangler.toml
+.wrangler/*
+.next
+.wrangler/state/v3/d1/miniflare-D1DatabaseObject/587effecfaa250c33f2a3b641973b6d5243ca9ae2c5dfe52c0187c3338ae57f0.sqlite

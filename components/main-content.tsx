@@ -11,6 +11,8 @@ import type { notes, todos } from "@/lib/db/schema"
 import type { InferSelectModel } from "drizzle-orm"
 import { SidebarInset } from "@/components/ui/sidebar"
 import useSWR from "swr"
+import { useRouter } from "next/navigation"
+import { signIn } from "next-auth/react"
 
 type Note = InferSelectModel<typeof notes>
 type Todo = InferSelectModel<typeof todos>
@@ -18,6 +20,7 @@ type Todo = InferSelectModel<typeof todos>
 
 
 export function MainContent({ defaultNote }: { defaultNote?: Note }) {
+  const router = useRouter()
   const [currentNote, setCurrentNote] = useState<Note | undefined>(defaultNote)
 
 
@@ -32,12 +35,20 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
 
   const fetcher = async (url: string) => {
     const res = await fetch(url);
+    if(res.status === 401) {
+      throw new Error("Unauthorized")
+    }
     if (!res.ok) throw new Error("Failed to fetch todos");
     return await res.json() as Todo[];
   };
   const { data: todos, error, mutate } = useSWR<Todo[]>(currentNote ? `/api/todos/${currentNote.id}` : null, fetcher, {
     revalidateOnFocus: true,
-    revalidateOnReconnect: true
+    revalidateOnReconnect: true,
+    onError: (error) => {
+      if (error.message === 'Unauthorized') {
+        router.push("/")
+      }
+    }
   });
 
 

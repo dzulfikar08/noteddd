@@ -15,19 +15,36 @@ import { Sidebar as SidebarComponent, SidebarHeader, SidebarContent } from "@/co
 import { useToast } from "@/components/ui/use-toast"
 import useSWR from "swr"
 
+import { useRouter } from "next/navigation"
+import { signIn } from "@/auth"
+
 type Note = InferSelectModel<typeof notes>
 
 export function Sidebar() {
+  const router = useRouter()
+
   const fetcher = useCallback(async (url: string) => {
     const res = await fetch(url)
-    if (!res.ok) throw new Error("Failed to fetch todos")
+    if (res.status === 401) {
+      throw new Error("Unauthorized")
+
+    }
+    if (!res.ok) {
+      throw new Error("Failed to fetch todos")
+    }
     return await res.json() as Note[]
   }, [])
 
   const { data: notesA, error, mutate } = useSWR("/api/notes", fetcher, {
     revalidateOnFocus: true,
     revalidateOnReconnect: true,
-  })
+    onError: (error) => {
+      if (error.message === 'Unauthorized') {
+        router.push("/")
+    }
+    }
+  } 
+)
 
   const notes = notesA ? [...notesA].sort((a, b) => b.id - a.id) : []
 

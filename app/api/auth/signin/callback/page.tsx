@@ -1,18 +1,19 @@
 "use client"
 
 import { useRouter } from "next/navigation"
-
-import { useToast } from "@/hooks/use-toast"
 import { getSession } from "next-auth/react"
 import toast from "react-hot-toast"
 
 
 export default async function Callback()  {
 
-      const router = useRouter()
+    const router = useRouter()
     const updatedSession = await getSession() // Ensure session is updated
+    console.log({updatedSession})
 
     if (updatedSession && updatedSession.user) {
+        console.log({newupdatedSession: updatedSession})
+
         const response = await fetch("/api/auth/signin", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -27,17 +28,11 @@ export default async function Callback()  {
         if (response.ok) {
             const data: { data: { name: string; token: string } } = await response.json()
             
-            // // Store token securely instead of localStorage (preferably use cookies)
-            // document.cookie = `token=${data.data.token}; path=/; secure; HttpOnly;`
-            
-            // toast({
-            //     title: "Login Successful",
-            //     description: "You have successfully logged in",
-            //     variant: "default"
-            // })
             toast.success("You have successfully logged in")
 
-            router.push("/")
+            localStorage.setItem("username", data.data.name) // Keeping only username in localStorage for now
+
+            router.push("/app")
         } else {
             let errorMessage = "Something went wrong"
             try {
@@ -47,13 +42,8 @@ export default async function Callback()  {
                 errorMessage = "Unexpected error occurred"
             }
 
-            // toast({
-            //     title: "Login Failed",
-            //     description: errorMessage,
-            //     variant: "destructive"
-            // })
             toast.error(errorMessage)
-            router.push("/login")
+            router.push("/")
         }
     }
 }

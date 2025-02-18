@@ -24,7 +24,7 @@ export function TopBar() {
 
 
   const handleLogin = () => {
-    signIn("google", { callbackUrl: "/app" })
+    signIn("google", { callbackUrl: "/api/auth/signin/callback" })
 
     if (session) {
       setIsLoggedIn(true)
@@ -67,7 +67,7 @@ export function TopBar() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36 flex flex-col">
-          {isLoggedIn === null ? (
+          {session?.data?.user ? (
             <>
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </>

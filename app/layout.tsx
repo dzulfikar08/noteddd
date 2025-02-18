@@ -25,10 +25,11 @@ export default function RootLayout({
 }) {
   return (
     <Provider>
-          <Toaster />
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
+        <Toaster />
+
           {children}
         </ThemeProvider>
       </body>
