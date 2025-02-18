@@ -2,9 +2,10 @@ import type React from "react"
 import "@/app/globals.css"
 import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
-import { Toaster } from "@/components/ui/toaster"
+
 import { TopBar } from "@/components/top-bar"
 import Provider from "@/app/app/component/Provider"
+import { Toaster } from "react-hot-toast"
 
 const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
@@ -24,11 +25,11 @@ export default function RootLayout({
 }) {
   return (
     <Provider>
+          <Toaster />
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
           {children}
-          <Toaster />
         </ThemeProvider>
       </body>
     </html>

@@ -1,5 +1,5 @@
 "use client"
-import { useAuth } from "@/app/contexts/AuthContext"
+
 import { useRouter } from "next/navigation"
 
 import { useToast } from "@/hooks/use-toast"
@@ -8,7 +8,6 @@ import toast from "react-hot-toast"
 
 
 export default async function Callback()  {
-      const { login } = useAuth()
 
       const router = useRouter()
     const updatedSession = await getSession() // Ensure session is updated
@@ -38,8 +37,6 @@ export default async function Callback()  {
             // })
             toast.success("You have successfully logged in")
 
-            localStorage.setItem("username", data.data.name) // Keeping only username in localStorage for now
-            login(data.data.token)
             router.push("/")
         } else {
             let errorMessage = "Something went wrong"
