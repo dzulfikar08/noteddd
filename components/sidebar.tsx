@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,14 +13,24 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Sidebar as SidebarComponent, SidebarHeader, SidebarContent } from "@/components/ui/sidebar"
 import { useToast } from "@/components/ui/use-toast"
-
-import { useRouter } from "next/navigation";
+import useSWR from "swr"
 
 type Note = InferSelectModel<typeof notes>
 
 export function Sidebar() {
-  const [notes, setNotes] = useState<Note[]>([])
-  const router = useRouter()
+  const fetcher = useCallback(async (url: string) => {
+    const res = await fetch(url)
+    if (!res.ok) throw new Error("Failed to fetch todos")
+    return await res.json() as Note[]
+  }, [])
+
+  const { data: notesA, error, mutate } = useSWR("/api/notes", fetcher, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true,
+  })
+
+  const notes = notesA ? [...notesA].sort((a, b) => b.id - a.id) : []
+
   const [editNoteTitle, setEditNoteTitle] = useState("")
   const [newNoteTitle, setNewNoteTitle] = useState(new Date().toISOString().split("T")[0])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -28,32 +38,21 @@ export function Sidebar() {
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const { toast } = useToast()
 
-  const [loading, setLoading] = useState(true);
 
-  const fetchNotes = async () => {
-    try {
-      const res = await fetch("/api/notes");
-      if (!res.ok) throw new Error("Failed to fetch notes");
-      const data = await res.json() as { id: number; title: string; createdAt: string }[];
-      setNotes(data.sort((a, b) => b.id - a.id));
-    } catch (error) {
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   useEffect(() => {
-    fetchNotes();
-  }, []);
+    if (notes && notes.length > 0) {
+      window.dispatchEvent(new CustomEvent("select-note", { detail: notes[0] }))
+    }
+  }, [notes])
 
-  if (loading) {
+  if (!notes) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
         <div className="animate-spin h-5 w-5 border-b-2 border-primary rounded-full"></div>
       </div>
-    );
+    )
   }
+
 
   const handleAddNote = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -63,14 +62,13 @@ export function Sidebar() {
         method: "POST",
         body: JSON.stringify({ title: newNoteTitle }),
       })
-      // addNote(newNoteTitle)
       setNewNoteTitle("")
       toast({
         title: "Note added",
         description: `"${newNoteTitle}" has been added to your notes.`,
       })
       setIsDialogOpen(false)
-      fetchNotes()
+      mutate()
     } catch (error) {
       toast({
         title: "Error",
@@ -80,7 +78,7 @@ export function Sidebar() {
     }
   }
 
-  const handleEditNote = async (note: Note) => {
+  const handleEditNote = (note: Note) => {
     setIsEditDialogOpen(true)
     setEditingNote(note)
     setEditNoteTitle(note.title)
@@ -94,15 +92,13 @@ export function Sidebar() {
         method: "PUT",
         body: JSON.stringify({ title: editNoteTitle }),
       })
-      // editNote(editingNote.id, editNoteTitle)
       setEditNoteTitle("")
       setIsEditDialogOpen(false)
       toast({
         title: "Note updated",
         description: `"${editNoteTitle}" has been updated.`,
       })
-      fetchNotes()
-
+      mutate()
     } catch (error) {
       toast({
         title: "Error",
@@ -117,13 +113,11 @@ export function Sidebar() {
       await fetch(`/api/notes/${note.id}`, {
         method: "DELETE",
       })
-      // deleteNote(note.id)
       toast({
         title: "Note deleted",
         description: `"${note.title}" has been deleted.`,
       })
-      fetchNotes()
-
+      mutate()
     } catch (error) {
       toast({
         title: "Error",
@@ -137,7 +131,7 @@ export function Sidebar() {
     <SidebarComponent className="top-14">
       <SidebarHeader className="flex h-14 items-center justify-between border-b px-4">
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild >
+          <DialogTrigger asChild>
             <Button variant="ghost" size="icon">
               <Plus className="h-5 w-5" />
             </Button>
@@ -170,7 +164,7 @@ export function Sidebar() {
               <div className="grid gap-4 py-4">
                 <Input
                   placeholder="List title..."
-                  value={  editNoteTitle }
+                  value={editNoteTitle}
                   onChange={(e) => setEditNoteTitle(e.target.value)}
                 />
               </div>
@@ -217,6 +211,5 @@ export function Sidebar() {
       </SidebarContent>
     </SidebarComponent>
   )
-
 }
 

@@ -8,6 +8,27 @@
       "when": 1739774589430,
       "tag": "0000_silent_synch",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1739891935096,
+      "tag": "0001_clever_hobgoblin",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1739893761982,
+      "tag": "0002_chief_jetstream",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1739894430453,
+      "tag": "0003_broken_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

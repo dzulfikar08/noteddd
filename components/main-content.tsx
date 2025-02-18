@@ -10,16 +10,17 @@ import { Plus, Pencil, Trash, X, Check } from "lucide-react"
 import type { notes, todos } from "@/lib/db/schema"
 import type { InferSelectModel } from "drizzle-orm"
 import { SidebarInset } from "@/components/ui/sidebar"
+import useSWR from "swr"
 
 type Note = InferSelectModel<typeof notes>
 type Todo = InferSelectModel<typeof todos>
 
+
+
 export function MainContent({ defaultNote }: { defaultNote?: Note }) {
   const [currentNote, setCurrentNote] = useState<Note | undefined>(defaultNote)
-  const [todos, setTodos] = useState<Todo[]>([])
-  const [newTodo, setNewTodo] = useState("")
-  const [editingTodo, setEditingTodo] = useState<{ id: number; content: string } | null>(null)
-  const [loading, setLoading] = useState(true);
+
+
 
   useEffect(() => {
     const handleSelectNote = (e: CustomEvent<Note>) => {
@@ -29,22 +30,31 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
     return () => window.removeEventListener("select-note", handleSelectNote as EventListener)
   }, [])
 
-  const fetchTodos = async (noteId: number) => {
-    try {
-      const res = await fetch(`/api/todos/${noteId}`);
-      if (!res.ok) throw new Error("Failed to fetch todos");
-      const data = await res.json() as Todo[];
-      setTodos(data);
-    } catch (error) {
-      console.error(error);
-    }
+  const fetcher = async (url: string) => {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Failed to fetch todos");
+    return await res.json() as Todo[];
   };
-  
+  const { data: todos, error, mutate } = useSWR<Todo[]>(currentNote ? `/api/todos/${currentNote.id}` : null, fetcher, {
+    revalidateOnFocus: true,
+    revalidateOnReconnect: true
+  });
+
+
   useEffect(() => {
     if (currentNote) {
-      fetchTodos(currentNote.id);
+      mutate();
     }
-  }, [currentNote]);
+  }, [currentNote, mutate]);
+
+  // const [todos, setTodos] = useState<Todo[]>([])
+  const [newTodo, setNewTodo] = useState("")
+  const [editingTodo, setEditingTodo] = useState<{ id: number; content: string } | null>(null)
+  const [loading, setLoading] = useState(true);
+
+
+
+
 
   const handleAddTodo = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -56,7 +66,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
     // addTodo(currentNote.id, newTodo)
     setNewTodo("")
     // setTodos(await getTodos(currentNote.id))
-    setTodos(await fetch(`/api/todos/${currentNote.id}`, { method: "GET" }).then(res => res.json()) as Todo[])
+    mutate()
 
   }
 
@@ -67,7 +77,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
     })
     // await updateTodo(id, data)
     if (currentNote) {
-      setTodos(await fetch(`/api/todos/${currentNote.id}`, { method: "GET" }).then(res => res.json()) as Todo[])
+      mutate()
     }
     setEditingTodo(null)
   }
@@ -78,7 +88,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
     })
     // await deleteTodo(id)
     if (currentNote) {
-      setTodos(await fetch(`/api/todos/${currentNote.id}`, { method: "GET" }).then(res => res.json()) as Todo[])
+      mutate()
 
       // setTodos(await getTodos(currentNote.id))
     }
@@ -113,7 +123,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
           </Button>
         </form>
         <div className="space-y-2">
-          {todos.map((todo) => (
+          {Array.isArray(todos) && todos.map((todo) => (
             <div key={todo.id} className="flex items-center justify-center h-8 gap-2 group border-b-2">
               <Checkbox
                 checked={todo.completed}

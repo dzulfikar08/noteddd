@@ -2,24 +2,24 @@
 
 import { db } from "@/lib/db"
 import { notes, todos } from "@/lib/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, and } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 // if (!db.$client || typeof db.$client.prepare !== 'function') {
 //   throw new Error('Client is not properly initialized');
 // }
 
-export async function getNotes() {
-  return await db.select().from(notes).orderBy(notes.createdAt)
+export async function getNotes(userId: string) {
+  return await db.select().from(notes).where(eq(notes.createdBy, userId)).orderBy(notes.createdAt)
 }
 
-export async function getTodos(noteId: number) {
-  return await db.select().from(todos).where(eq(todos.noteId, noteId)).orderBy(todos.createdAt)
+export async function getTodos(noteId: number, userId: string) {
+  return await db.select().from(todos).where(and(eq(todos.noteId, noteId) )).orderBy(todos.createdAt)
 }
 
-export async function addNote(title: string) {
+export async function addNote(title: string, userId: string) {
   revalidatePath("/")
-  return  await db.insert(notes).values({ title })
+  return  await db.insert(notes).values({ title, createdBy: userId }).returning()
 }
 
 export async function deleteNote(id: number) {

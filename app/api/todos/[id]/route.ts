@@ -1,4 +1,5 @@
 import { addTodo, deleteTodo, getTodos, updateTodo } from '@/lib/actions'
+import { getToken } from 'next-auth/jwt';
 
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -9,11 +10,15 @@ export const runtime ='edge'
 /** GET: Fetch all experiences */
 export const GET = async (req: NextRequest, { params }: { params: Promise<{ id:number }> }) => {
     try {
+      const session = await getToken({ req , secret: process.env.AUTH_SECRET});
+            if (!session) 
+              return NextResponse.json({message: "You must be logged in."}, {status: 401});
+            const userId = session.sub ?? ''
       const id = (await params).id
-      const res = await getTodos(id)
+      const res = await getTodos(id, userId)
       return NextResponse.json(res, { status: 200 })
-    } catch (error) {
-      return NextResponse.json({ error: 'Failed to fetch users' }, { status: 500 })
+    } catch (error: any) {
+      return NextResponse.json({ error: 'Failed to fetch todos', message: error.message }, { status: 500 })
     }
   }
 

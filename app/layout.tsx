@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import { TopBar } from "@/components/top-bar"
+import Provider from "@/app/app/component/Provider"
 
 const inter = Inter({ subsets: ["latin"] })
 export const metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
+    <Provider>
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false} disableTransitionOnChange>
@@ -30,6 +32,7 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
+    </Provider>
   )
 }
 

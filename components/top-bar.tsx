@@ -10,32 +10,37 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useToast } from "@/components/ui/use-toast"
+import { toast, useToast } from "@/components/ui/use-toast"
+import { signIn, signOut, useSession } from "next-auth/react"
 
 export function TopBar() {
   const { setTheme, theme } = useTheme()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-  const [username, setUsername] = useState("")
-  const [password, setPassword] = useState("")
   const { toast } = useToast()
+  const session = useSession()
+  console.log(session)
+  const [isLoggedIn, setIsLoggedIn] = useState(session.status === "authenticated")
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-    // Here you would typically make an API call to authenticate the user
-    // For this example, we'll just simulate a login
-    if (username && password) {
+
+
+
+  const handleLogin = () => {
+    signIn("google", { callbackUrl: "/app" })
+
+    if (session) {
       setIsLoggedIn(true)
       toast({
         title: "Logged in successfully",
-        description: `Welcome, ${username}!`,
+        description: `Welcome, ${session.data?.user?.name}!`,
       })
+
     }
   }
 
+  
+
   const handleLogout = () => {
+    signOut({ callbackUrl: "/app" })
     setIsLoggedIn(false)
-    setUsername("")
-    setPassword("")
     toast({
       title: "Logged out successfully",
       description: "You have been logged out.",
@@ -51,32 +56,23 @@ export function TopBar() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon">
-            <User className="h-5 w-5" />
+            {session?.data?.user?.image ? (
+              <img
+                src={session.data.user.image}
+                alt={'profile'}
+                className="h-5 w-5 rounded-full"
+              />
+            ) : <User className="h-5 w-5" />}
+            
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          {isLoggedIn ? (
+        <DropdownMenuContent align="end" className="w-36 flex flex-col">
+          {isLoggedIn === null ? (
             <>
               <DropdownMenuItem onClick={handleLogout}>Logout</DropdownMenuItem>
             </>
           ) : (
-            <form onSubmit={handleLogin} className="grid gap-4 p-4">
-              <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
-                <Input id="username" value={username} onChange={(e) => setUsername(e.target.value)} required />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <Button type="submit">Login</Button>
-            </form>
+              <Button onClick={() => handleLogin()}>Google Sign In</Button>
           )}
           <DropdownMenuItem onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
             {theme === "dark" ? (
