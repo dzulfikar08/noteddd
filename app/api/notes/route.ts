@@ -11,7 +11,7 @@ export const runtime ='edge'
 export const GET = async (req: NextRequest) => {
     try {
       // middleware(NextRequest, NextResponse, () => {})
-      const session = await getToken({ req , secret: process.env.AUTH_SECRET});
+      const session = await getToken({ req , secret: process.env.AUTH_SECRET, secureCookie: true});
       if (!session) 
         return NextResponse.json({message: "You must be logged in.", data:session}, {status: 401});
       const userId = session.sub ?? ''
@@ -25,13 +25,13 @@ export const GET = async (req: NextRequest) => {
 
   export const POST = async(req: NextRequest) => {
     try {
-      const session = await getToken({ req , secret: process.env.AUTH_SECRET});
+      const session = await getToken({ req , secret: process.env.AUTH_SECRET, secureCookie: true});
       if (!session) 
         return NextResponse.json({message: "You must be logged in.", data:session}, {status: 401});
       const userId = session.sub ?? ''
       const requestBody: any = await req.json()
       const title: string = requestBody?.title
-      const response = await addNote(title, userId)
+      const response = await addNote(title, userId, requestBody.sync)
       return NextResponse.json({ success:true, data:response }, { status: 200 })
   
   

@@ -10,7 +10,7 @@ export const runtime ='edge'
 /** GET: Fetch all experiences */
 export const GET = async (req: NextRequest, { params }: { params: Promise<{ id:number }> }) => {
     try {
-      const session = await getToken({ req , secret: process.env.AUTH_SECRET});
+      const session = await getToken({ req , secret: process.env.AUTH_SECRET, secureCookie: true});
             if (!session) 
               return NextResponse.json({message: "You must be logged in."}, {status: 401});
             const userId = session.sub ?? ''

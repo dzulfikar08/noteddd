@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Noteddd 🙏🏻',
     short_name: 'Noteddd 🙏🏻',
     description: 'Actually note what your boss said to you',
-    start_url: '/',
+    start_url: '/app',
     display: 'fullscreen',
     background_color: '#ffffff',
     theme_color: '#000000',

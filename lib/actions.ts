@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db"
 import { notes, todos } from "@/lib/db/schema"
-import { eq, and } from "drizzle-orm"
+import { eq, and, max } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 // if (!db.$client || typeof db.$client.prepare !== 'function') {
@@ -17,9 +17,16 @@ export async function getTodos(noteId: number, userId: string) {
   return await db.select().from(todos).where(and(eq(todos.noteId, noteId) )).orderBy(todos.createdAt)
 }
 
-export async function addNote(title: string, userId: string) {
+export async function addNote(title: string, userId: string, sync: boolean = false) {
   revalidatePath("/")
-  return  await db.insert(notes).values({ title, createdBy: userId }).returning()
+  if(sync === true) {
+    const prevNote = await db.select().from(notes).limit(1).orderBy(max(notes.createdAt))
+    const prevTodo = await db.select().from(todos).where(and(eq(todos.noteId, prevNote[0].id), eq(todos.completed, false)))
+    return  await db.insert(todos).values(prevTodo).returning()
+  } else {
+    return  await db.insert(notes).values({ title, createdBy: userId }).returning()
+
+  }
 }
 
 export async function deleteNote(id: number) {
@@ -39,6 +46,7 @@ export async function addTodo(noteId: number, content: string) {
     completed: false,
   }).returning()
 }
+
 
 export async function updateTodo(id: number, data: { content?: string; completed?: boolean }) {
   revalidatePath("/")

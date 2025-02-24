@@ -6,13 +6,15 @@ import { useEffect, useState } from "react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Pencil, Trash, X, Check } from "lucide-react"
+import { Plus, Pencil, Trash, X, Check, RefreshCw } from "lucide-react"
 import type { notes, todos } from "@/lib/db/schema"
 import type { InferSelectModel } from "drizzle-orm"
 import { SidebarInset } from "@/components/ui/sidebar"
 import useSWR from "swr"
 import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
+import { Dialog, DialogClose, DialogTrigger } from "./ui/dialog"
+import { DialogContent, DialogDescription, DialogTitle } from "@radix-ui/react-dialog"
 
 type Note = InferSelectModel<typeof notes>
 type Todo = InferSelectModel<typeof todos>
@@ -105,6 +107,13 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
     }
   }
 
+  const handleSync = async () => {
+    await fetch('/api/todos/sync', {
+      method: "POST",
+    })
+    mutate()
+  }
+
   if (!currentNote) {
     return (
       <div></div>
@@ -132,11 +141,32 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
           <Button type="submit" size="icon">
             <Plus className="h-4 w-4" />
           </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <RefreshCw className="h-4 w-4" /> Sync
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogTitle className="text-lg font-semibold">
+                  Sync todos?
+                </DialogTitle>
+                <DialogDescription className="mt-2 text-sm text-muted-foreground">
+                  Are you sure you want to sync uncompleted todos from previous note?
+                </DialogDescription>
+                <div className="mt-4 flex justify-end gap-2">
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button onClick={() => handleSync()}>Sync</Button>
+                </div>
+              </DialogContent>
+          </Dialog>
         </form>
         <div className="space-y-2">
           {Array.isArray(todos) && todos.map((todo) => (
-            <div key={todo.id} className="flex items-center justify-center h-8 gap-2 group border-b-2">
-              <Checkbox
+            <div key={todo.id} className="flex items-center justify-center h-12 gap-2 group border-b-2">
+              <Checkbox className="h-8 w-8" 
                 checked={todo.completed}
                 onCheckedChange={(checked) => {
                   handleUpdateTodo(todo.id, { completed: checked as boolean })
@@ -147,7 +177,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
                   <Input
                     value={editingTodo.content}
                     onChange={(e) => setEditingTodo({ ...editingTodo, content: e.target.value })}
-                    className="h-8"
+                    className="h-12"
                   />
                   <Button
                     size="icon"
@@ -162,7 +192,8 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
                 </div>
               ) : (
                 <>
-                  <span className={todo.completed ? "flex-1 text-muted-foreground line-through" : "flex-1"}>
+                  <span className={todo.completed ? "flex-1 text-muted-foreground line-through" : "flex-1"}
+                  onClick={() => handleUpdateTodo(todo.id, { completed: !todo.completed })}>
                     {todo.content}
                   </span>
                   <div className="hidden group-hover:flex p items-center gap-1">

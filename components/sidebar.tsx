@@ -11,12 +11,14 @@ import type { notes } from "@/lib/db/schema"
 import type { InferSelectModel } from "drizzle-orm"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Sidebar as SidebarComponent, SidebarHeader, SidebarContent } from "@/components/ui/sidebar"
-import { useToast } from "@/components/ui/use-toast"
+import { Sidebar as SidebarComponent, SidebarHeader, SidebarContent, useSidebar } from "@/components/ui/sidebar"
+
 import useSWR from "swr"
 
 import { useRouter } from "next/navigation"
 import { signIn } from "@/auth"
+import toast from "react-hot-toast"
+import { Checkbox } from "./ui/checkbox"
 
 type Note = InferSelectModel<typeof notes>
 
@@ -41,6 +43,7 @@ export function Sidebar() {
     onError: (error) => {
       if (error.message === 'Unauthorized') {
         router.push("/")
+        toast.error("Unauthorized")
     }
     }
   } 
@@ -53,7 +56,8 @@ export function Sidebar() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
-  const { toast } = useToast()
+  const [isSync, setIsSync] = useState(false)
+
 
 
   useEffect(() => {
@@ -77,21 +81,14 @@ export function Sidebar() {
     try {
       await fetch("/api/notes", {
         method: "POST",
-        body: JSON.stringify({ title: newNoteTitle }),
+        body: JSON.stringify({ title: newNoteTitle, sync: isSync  }),
       })
       setNewNoteTitle("")
-      toast({
-        title: "Note added",
-        description: `"${newNoteTitle}" has been added to your notes.`,
-      })
+      toast( "Note added")
       setIsDialogOpen(false)
       mutate()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to add note. Please try again.",
-        variant: "destructive",
-      })
+      toast("Failed to add note. Please try again.")
     }
   }
 
@@ -111,17 +108,10 @@ export function Sidebar() {
       })
       setEditNoteTitle("")
       setIsEditDialogOpen(false)
-      toast({
-        title: "Note updated",
-        description: `"${editNoteTitle}" has been updated.`,
-      })
+      toast.success("Note updated")
       mutate()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to update note. Please try again.",
-        variant: "destructive",
-      })
+      toast.error("Failed to update note. Please try again.")
     }
   }
 
@@ -130,19 +120,14 @@ export function Sidebar() {
       await fetch(`/api/notes/${note.id}`, {
         method: "DELETE",
       })
-      toast({
-        title: "Note deleted",
-        description: `"${note.title}" has been deleted.`,
-      })
+      toast.success("Note deleted",)
       mutate()
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to delete note. Please try again.",
-        variant: "destructive",
-      })
+      toast.error( "Failed to delete note. Please try again.")
     }
   }
+
+  const {toggleSidebar, isMobile} =useSidebar()
 
   return (
     <SidebarComponent className="top-14">
@@ -164,6 +149,16 @@ export function Sidebar() {
                   value={newNoteTitle}
                   onChange={(e) => setNewNoteTitle(e.target.value)}
                 />
+              <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sync"
+                checked={Boolean(isSync)}
+                onCheckedChange={(checked) => setIsSync(checked === 'indeterminate' ? false : checked)}
+              />
+                <label htmlFor="sync" className="text-sm text-muted-foreground">
+                  Sync with previous uncompleted note?
+                </label>
+              </div>
               </div>
               <DialogFooter>
                 <Button type="submit">Create</Button>
@@ -200,7 +195,7 @@ export function Sidebar() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start"
-                  onClick={() => window.dispatchEvent(new CustomEvent("select-note", { detail: note }))}
+                  onClick={() => {window.dispatchEvent(new CustomEvent("select-note", { detail: note })), isMobile ? toggleSidebar() : null}}
                 >
                   {note.title}
                 </Button>
