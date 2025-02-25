@@ -129,6 +129,11 @@ export function Sidebar() {
 
   const {toggleSidebar, isMobile} =useSidebar()
 
+  function handleClick(note: object) {
+    window.dispatchEvent(new CustomEvent("select-note", { detail: note }));
+    isMobile ? toggleSidebar() : null
+  }
+
   return (
     <SidebarComponent className="top-14">
       <SidebarHeader className="flex h-14 items-center justify-between border-b px-4">
@@ -195,7 +200,7 @@ export function Sidebar() {
                 <Button
                   variant="ghost"
                   className="w-full justify-start"
-                  onClick={() => {window.dispatchEvent(new CustomEvent("select-note", { detail: note })), isMobile ? toggleSidebar() : null}}
+                  onClick={() => {handleClick(note)}}
                 >
                   {note.title}
                 </Button>

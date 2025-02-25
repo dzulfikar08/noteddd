@@ -107,12 +107,12 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
     }
   }
 
-  const handleSync = async () => {
-    await fetch('/api/todos/sync', {
-      method: "POST",
-    })
-    mutate()
-  }
+  // const handleSync = async () => {
+  //   await fetch('/api/todos/sync', {
+  //     method: "POST",
+  //   })
+  //   mutate()
+  // }
 
   if (!currentNote) {
     return (
@@ -141,7 +141,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
           <Button type="submit" size="icon">
             <Plus className="h-4 w-4" />
           </Button>
-          <Dialog>
+          {/* <Dialog>
             <DialogTrigger asChild>
               <Button>
                 <RefreshCw className="h-4 w-4" /> Sync
@@ -161,7 +161,7 @@ export function MainContent({ defaultNote }: { defaultNote?: Note }) {
                   <Button onClick={() => handleSync()}>Sync</Button>
                 </div>
               </DialogContent>
-          </Dialog>
+          </Dialog> */}
         </form>
         <div className="space-y-2">
           {Array.isArray(todos) && todos.map((todo) => (

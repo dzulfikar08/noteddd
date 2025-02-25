@@ -31,12 +31,13 @@ export const GET = async (req: NextRequest) => {
       const userId = session.sub ?? ''
       const requestBody: any = await req.json()
       const title: string = requestBody?.title
-      const response = await addNote(title, userId, requestBody.sync)
+      const sync: boolean = requestBody?.sync
+      const response = await addNote(title, userId, sync)
       return NextResponse.json({ success:true, data:response }, { status: 200 })
   
   
-    } catch (error) {
-      return NextResponse.json({ error: 'Failed to add habits' }, { status: 500 })
+    } catch (error: any) {
+      return NextResponse.json({ error: 'Failed to add habits', message: error.message }, { status: 500 })
       
     }
   }

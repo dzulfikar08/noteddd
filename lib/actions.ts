@@ -2,7 +2,7 @@
 
 import { db } from "@/lib/db"
 import { notes, todos } from "@/lib/db/schema"
-import { eq, and, max } from "drizzle-orm"
+import { eq, and, desc } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 
 // if (!db.$client || typeof db.$client.prepare !== 'function') {
@@ -20,9 +20,12 @@ export async function getTodos(noteId: number, userId: string) {
 export async function addNote(title: string, userId: string, sync: boolean = false) {
   revalidatePath("/")
   if(sync === true) {
-    const prevNote = await db.select().from(notes).limit(1).orderBy(max(notes.createdAt))
+    const prevNote = await db.select().from(notes).where(eq(notes.createdBy, userId)).limit(1).orderBy(desc(notes.id))
     const prevTodo = await db.select().from(todos).where(and(eq(todos.noteId, prevNote[0].id), eq(todos.completed, false)))
-    return  await db.insert(todos).values(prevTodo).returning()
+    const newNote = await db.insert(notes).values({ title, createdBy: userId }).returning()
+    const newNoteId = newNote[0].id
+    const newTodos = await db.insert(todos).values(prevTodo.map(({ id, ...rest }) => ({ ...rest, noteId: newNoteId }))).returning()
+    return newNote
   } else {
     return  await db.insert(notes).values({ title, createdBy: userId }).returning()
 
