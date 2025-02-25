@@ -57,14 +57,11 @@ export function Sidebar() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingNote, setEditingNote] = useState<Note | null>(null)
   const [isSync, setIsSync] = useState(false)
+  const [initialized, setInitialized] = useState(false); // Track first load
 
 
 
-  useEffect(() => {
-    if (notes && notes.length > 0) {
-      window.dispatchEvent(new CustomEvent("select-note", { detail: notes[0] }))
-    }
-  }, [notes])
+
 
   if (!notes) {
     return (
@@ -87,6 +84,7 @@ export function Sidebar() {
       toast( "Note added")
       setIsDialogOpen(false)
       mutate()
+      window.dispatchEvent(new CustomEvent("select-note", { detail: notes[0] }));
     } catch (error) {
       toast("Failed to add note. Please try again.")
     }
@@ -110,6 +108,7 @@ export function Sidebar() {
       setIsEditDialogOpen(false)
       toast.success("Note updated")
       mutate()
+      window.dispatchEvent(new CustomEvent("select-note", { detail: editingNote }));
     } catch (error) {
       toast.error("Failed to update note. Please try again.")
     }
@@ -122,17 +121,27 @@ export function Sidebar() {
       })
       toast.success("Note deleted",)
       mutate()
+      window.dispatchEvent(new CustomEvent("select-note", { detail: notes[0] }));
     } catch (error) {
       toast.error( "Failed to delete note. Please try again.")
     }
   }
 
-  const {toggleSidebar, isMobile} =useSidebar()
+  const {setOpenMobile, isMobile} =useSidebar()
 
   function handleClick(note: object) {
-    window.dispatchEvent(new CustomEvent("select-note", { detail: note }));
-    isMobile ? toggleSidebar() : null
+    if (note) {
+      window.dispatchEvent(new CustomEvent("select-note", { detail: note }));
+      if (isMobile) setOpenMobile(false);
+    }
   }
+  
+  useEffect(() => {
+    if (!initialized && notes && notes.length > 0) {
+      window.dispatchEvent(new CustomEvent("select-note", { detail: notes[0] }));
+      setInitialized(true); // Mark as initialized to prevent re-running
+    }
+  }, [notes, initialized]);
 
   return (
     <SidebarComponent className="top-14">
